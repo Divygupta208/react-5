@@ -1,8 +1,10 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useContext, useEffect, useReducer, useState } from "react";
 
 import Card from "../UI/Card/Card";
 import classes from "./Login.module.css";
 import Button from "../UI/Button/Button";
+import AuthContext from "../../store/auth-context";
+import Input from "../Input/Input";
 
 const emailReducer = (state, action) => {
   if (action.type === "USER_INPUT") {
@@ -45,42 +47,33 @@ const Login = (props) => {
     isValid: null,
   });
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //
-  //   }, 500);
+  const authctx = useContext(AuthContext);
 
-  //   return () => {
-  //     clearInterval(timer);
-  //   };
-  // }, [enteredEmail, enteredPassword, enteredCollege]);
+  const { isValid: emailValidity } = emailState;
+  const { isValid: passwordValidity } = passwordState;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFormIsValid(
+        emailValidity && passwordValidity && enteredCollege.length > 0
+      );
+    }, 500);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [emailValidity, passwordValidity, enteredCollege]);
 
   const emailChangeHandler = (event) => {
     dispatchEmail({ type: "USER_INPUT", val: event.target.value });
-    setFormIsValid(
-      event.target.value.includes("@") &&
-        passwordState.isValid &&
-        enteredCollege.length > 0
-    );
   };
 
   const passwordChangeHandler = (event) => {
     dispatchPassword({ type: "USER_PASS", val: event.target.value });
-
-    setFormIsValid(
-      emailState.isValid &&
-        event.target.value.trim().length > 6 &&
-        enteredCollege.length > 0
-    );
   };
 
   const collegeChangeHandler = (event) => {
     setEnteredCollege(event.target.value);
-    setFormIsValid(
-      emailState.isValid &&
-        passwordState.isValid &&
-        event.target.value.length > 0
-    );
   };
   const validateEmailHandler = () => {
     dispatchEmail({ type: "INPUT_BLUR" });
@@ -96,54 +89,40 @@ const Login = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(emailState.value, passwordState.value, enteredCollege);
+    authctx.onLogin(emailState.value, passwordState.value, enteredCollege);
   };
 
   return (
     <Card className={classes.login}>
       <form onSubmit={submitHandler}>
-        <div
-          className={`${classes.control} ${
-            emailState.isValid === false ? classes.invalid : ""
-          }`}
-        >
-          <label htmlFor="email">E-Mail</label>
-          <input
-            type="email"
-            id="email"
-            value={emailState.value}
-            onChange={emailChangeHandler}
-            onBlur={validateEmailHandler}
-          />
-        </div>
-        <div
-          className={`${classes.control} ${
-            passwordState.isValid === false ? classes.invalid : ""
-          }`}
-        >
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={passwordState.value}
-            onChange={passwordChangeHandler}
-            onBlur={validatePasswordHandler}
-          />
-        </div>
-        <div
-          className={`${classes.control} ${
-            collegeIsValid === false ? classes.invalid : ""
-          }`}
-        >
-          <label htmlFor="college">college name</label>
-          <input
-            type="text"
-            id="college"
-            value={enteredCollege}
-            onChange={collegeChangeHandler}
-            onBlur={validateCollegeHandler}
-          />
-        </div>
+        <Input
+          id="email"
+          type="email"
+          label="Email"
+          isValid={emailValidity}
+          value={emailState.value}
+          onChange={emailChangeHandler}
+          onBlur={validateEmailHandler}
+        />
+        <Input
+          id="password"
+          type="password"
+          label="Password"
+          isValid={passwordValidity}
+          value={passwordState.value}
+          onChange={passwordChangeHandler}
+          onBlur={validatePasswordHandler}
+        />
+        <Input
+          id="college"
+          type="text"
+          label="College"
+          isValid={collegeIsValid}
+          value={enteredCollege}
+          onChange={collegeChangeHandler}
+          onBlur={validateCollegeHandler}
+        />
+
         <div className={classes.actions}>
           <Button type="submit" className={classes.btn} disabled={!formIsValid}>
             Login
